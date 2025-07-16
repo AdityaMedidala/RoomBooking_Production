@@ -1,16 +1,17 @@
-// server.js (Corrected and updated for room management)
+// server.js (Updated for HTTP)
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const sql = require('mssql');
 const path = require('path');
 const fs = require('fs');
-const https = require('https'); // Import the https module
+// const https = require('https'); // No longer needed for HTTP
 
 dotenv.config(); // Load environment variables from .env file
 
 const app = express();
-const PORT = process.env.PORT || 443; // Define server port, default to 443 for HTTPS
+// Changed default port to 5000, a common port for HTTP development
+const PORT = process.env.PORT || 5000;
 
 // Create upload directory if it doesn't exist
 const uploadDir = path.join(__dirname, 'public/uploads');
@@ -29,7 +30,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files from the 'public' directory (which now contains 'dist')
+// Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Serve the built frontend from the 'public/dist' directory
@@ -92,7 +93,6 @@ const startServer = async () => {
     app.use('/api/rooms', roomRoutes);
 
     // --- Catch-all to serve frontend's index.html for client-side routing ---
-    // This should be after your API routes but before the 404 handler.
     app.get('*', (req, res, next) => {
       console.log(`Catch-all hit for: ${req.originalUrl}`);
       if (req.originalUrl.startsWith('/api/') || req.originalUrl.startsWith('/uploads/')) {
@@ -119,16 +119,11 @@ const startServer = async () => {
       });
     });
 
-    // --- HTTPS Server Configuration ---
-    const httpsOptions = {
-      key: fs.readFileSync(path.join(__dirname, 'certs', 'your_private_key.key')), // Replace with your key file name
-      cert: fs.readFileSync(path.join(__dirname, 'certs', 'your_certificate.crt')), // Replace with your certificate file name
-      ca: fs.readFileSync(path.join(__dirname, 'certs', 'your_ca_bundle.crt')),     // Replace with your CA bundle file name (optional but recommended)
-    };
+    // --- HTTPS Server Configuration Removed ---
 
-    // 5. Start the HTTPS Server
-    https.createServer(httpsOptions, app).listen(PORT, () => {
-      console.log(`🚀 HTTPS Server running on port ${PORT}`);
+    // 5. Start the HTTP Server
+    app.listen(PORT, () => {
+      console.log(`🚀 HTTP Server running on port ${PORT}`);
     });
 
   } catch (error) {
