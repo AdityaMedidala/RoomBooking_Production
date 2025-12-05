@@ -1,6 +1,3 @@
-const fs = require('fs');
-const path = require('path');
-
 const roomController = {
   dbPool: null,
   setDbPool: (pool) => { roomController.dbPool = pool; },
@@ -11,7 +8,8 @@ const roomController = {
       const rooms = result.rows.map(room => ({
         ...room,
         features: room.features ? room.features.split(',') : [],
-        image: room.image ? `${req.protocol}://${req.get('host')}${room.image}` : null
+        // FIX 1: Don't mess with the URL. If it's from Cloudinary, it's already a full link.
+        image: room.image 
       }));
       res.status(200).json(rooms);
     } catch (error) {
@@ -21,20 +19,26 @@ const roomController = {
 
   createRoom: async (req, res) => {
     const { name, capacity, features, location } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
+    
+    // FIX 2: Use 'req.file.path' (Cloudinary URL) instead of building a fake local path
+    const image = req.file ? req.file.path : null;
+
     try {
       const query = `INSERT INTO rooms (name, capacity, location, features, image) VALUES ($1, $2, $3, $4, $5) RETURNING *`;
       const result = await roomController.dbPool.query(query, [name, capacity, location, features, image]);
       res.status(201).json({ message: 'Created', room: result.rows[0] });
     } catch (error) {
+      console.error(error);
       res.status(500).json({ message: 'Error creating room' });
     }
   },
 
   updateRoom: async (req, res) => {
     const { id } = req.params;
-    const { name, capacity, features, location } = req.body;
-    const image = req.file ? `/uploads/${req.file.filename}` : undefined;
+    const { name, capacity, location, features } = req.body;
+    
+    // FIX 3: Same here - use the full Cloudinary path if a new file was uploaded
+    const image = req.file ? req.file.path : undefined;
 
     try {
       let query = 'UPDATE rooms SET name=$1, capacity=$2, location=$3, features=$4';
@@ -53,6 +57,7 @@ const roomController = {
       if (result.rowCount === 0) return res.status(404).json({ message: 'Not found' });
       res.status(200).json({ message: 'Updated', room: result.rows[0] });
     } catch (error) {
+      console.error(error);
       res.status(500).json({ message: 'Update failed' });
     }
   },
@@ -65,11 +70,9 @@ const roomController = {
         
         await roomController.dbPool.query('DELETE FROM rooms WHERE id=$1', [id]);
         
-        const img = check.rows[0].image;
-        if(img && img.startsWith('/uploads/')) {
-            fs.unlink(path.join(__dirname, '..', 'public', img), () => {});
-        }
-        res.status(200).json({ message: 'Deleted' });
+        // Note: We are not deleting the image from Cloudinary here to keep it simple,
+        // but the room is removed from DB.
+        res.status(200).json({ message: 'Room deleted' });
     } catch (error) {
         res.status(500).json({ message: 'Delete failed' });
     }
