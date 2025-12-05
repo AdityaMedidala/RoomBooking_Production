@@ -1,8 +1,11 @@
 import { Room, BackendBooking, BookingSlot } from '@/types/room';
 
 // Point to your local backend
-const API_BASE_URL = 'http://localhost:5000/api';
-
+// Use the Environment Variable, or fallback to localhost for development
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL 
+  ? `${process.env.NEXT_PUBLIC_API_URL}/api` 
+  : 'http://localhost:5000/api';
+  
 // --- HELPER: Fetch Wrapper ---
 const fetchJSON = async (url: string, options: RequestInit = {}) => {
   const res = await fetch(url, {
