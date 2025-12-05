@@ -1,6 +1,8 @@
-const API = process.env.NEXT_PUBLIC_API_URL 
-  ? `${process.env.NEXT_PUBLIC_API_URL}/api` 
-  : 'http://localhost:5000/api';const ADMIN_AUTH = { 'x-admin-auth': 'simulated_admin_token' };
+const API = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api` 
+  : 'http://localhost:5000/api';
+  
+  const ADMIN_AUTH = { 'x-admin-auth': 'simulated_admin_token' };
 
 const adminFetch = async (endpoint: string, opts: RequestInit = {}) => {
   const res = await fetch(`${API}${endpoint}`, {
