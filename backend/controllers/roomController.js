@@ -8,7 +8,6 @@ const roomController = {
       const rooms = result.rows.map(room => ({
         ...room,
         features: room.features ? room.features.split(',') : [],
-        // FIX 1: Don't mess with the URL. If it's from Cloudinary, it's already a full link.
         image: room.image 
       }));
       res.status(200).json(rooms);
@@ -20,7 +19,6 @@ const roomController = {
   createRoom: async (req, res) => {
     const { name, capacity, features, location } = req.body;
     
-    // FIX 2: Use 'req.file.path' (Cloudinary URL) instead of building a fake local path
     const image = req.file ? req.file.path : null;
 
     try {
@@ -37,7 +35,6 @@ const roomController = {
     const { id } = req.params;
     const { name, capacity, location, features } = req.body;
     
-    // FIX 3: Same here - use the full Cloudinary path if a new file was uploaded
     const image = req.file ? req.file.path : undefined;
 
     try {
@@ -70,8 +67,6 @@ const roomController = {
         
         await roomController.dbPool.query('DELETE FROM rooms WHERE id=$1', [id]);
         
-        // Note: We are not deleting the image from Cloudinary here to keep it simple,
-        // but the room is removed from DB.
         res.status(200).json({ message: 'Room deleted' });
     } catch (error) {
         res.status(500).json({ message: 'Delete failed' });

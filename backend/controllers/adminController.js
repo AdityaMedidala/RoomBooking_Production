@@ -43,7 +43,6 @@ const adminController = {
         try {
             await client.query('BEGIN');
 
-            // Fetch details first for the email
             const checkQuery = `SELECT subject, room_name, start_datetime, end_datetime, organizer_email 
                                 FROM room_bookings WHERE event_id = $1 AND status = 'confirmed'`;
             const checkResult = await client.query(checkQuery, [eventId]);
@@ -54,7 +53,6 @@ const adminController = {
                 return res.status(404).json({ success: false, message: 'Booking not found or already cancelled.' });
             }
 
-            // Update status
             const updateQuery = `UPDATE room_bookings 
                                  SET status = 'cancelled', cancelled_at = NOW(), updated_at = NOW() 
                                  WHERE event_id = $1`;
@@ -62,7 +60,6 @@ const adminController = {
 
             await client.query('COMMIT');
 
-            // Send Email
             const html = `
                 <p>Dear ${bookingToCancel.organizer_email.split('@')[0]},</p>
                 <p>Your booking for <strong>${bookingToCancel.room_name}</strong> has been cancelled by the administrator.</p>
@@ -128,7 +125,6 @@ const adminController = {
 
             await adminController.dbPool.query(query, values);
             
-            // Optional: Send confirmation email
             await sendEmail(organizer_email, `Admin Booking: ${subject}`, `<p>An administrator has created a booking for you in ${room_name}.</p>`);
 
             res.status(201).json({ success: true, message: 'Booking created by admin.', event_id });

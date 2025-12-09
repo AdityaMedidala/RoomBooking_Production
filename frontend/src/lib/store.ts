@@ -1,11 +1,8 @@
 import { Room, BackendBooking, BookingSlot } from '@/types/room';
 
-// Point to your local backend
-// Use the Environment Variable, or fallback to localhost for development
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL}/api` 
   : 'http://localhost:5000/api';
-// --- HELPER: Fetch Wrapper ---
 const fetchJSON = async (url: string, options: RequestInit = {}) => {
   const res = await fetch(url, {
     ...options,
@@ -29,13 +26,10 @@ export const getRooms = async (): Promise<Room[]> => {
 
 // --- 2. BOOKINGS ---
 
-// Fetch bookings for a specific room and date
 export const fetchBookedSlots = async (roomId: string, date: string): Promise<BookingSlot[]> => {
-  // Backend expects: /api/bookings/events?roomId=1&startDate=2024-10-25
   const url = `${API_BASE_URL}/bookings/events?roomId=${roomId}&startDate=${date}`;
   const bookings: BackendBooking[] = await fetchJSON(url);
 
-  // Map Postgres format to Frontend Calendar format
   return bookings.map((b) => ({
     id: b.event_id,
     subject: b.subject,
@@ -48,20 +42,19 @@ export const fetchBookedSlots = async (roomId: string, date: string): Promise<Bo
 
 // Create a new booking
 export const addBooking = async (bookingData: any) => {
-  // Map frontend form data to backend expected payload
   const payload = {
     room_id: parseInt(bookingData.roomId),
     room_name: bookingData.roomName,
     subject: bookingData.subject,
     description: bookingData.description,
-    organizer_email: bookingData.organizerEmail, // This triggers the Resend email
+    organizer_email: bookingData.organizerEmail, 
     start_datetime: bookingData.start.toISOString(),
     end_datetime: bookingData.end.toISOString(),
     total_participants: bookingData.totalParticipants,
     internal_participants: bookingData.internalParticipants,
     external_participants: bookingData.externalParticipants,
     meeting_type: bookingData.meetingType,
-    attendee_emails: bookingData.attendees, // Array of strings
+    attendee_emails: bookingData.attendees,
     location: bookingData.location
   };
 
@@ -81,7 +74,6 @@ export const cancelBooking = async (eventId: string, organizerEmail: string) => 
 
 // Update/Reschedule Booking
 export const updateBooking = async (eventId: string, updateData: any) => {
-  // Convert payload similar to addBooking
   const payload = {
     room_id: parseInt(updateData.roomId),
     subject: updateData.subject,

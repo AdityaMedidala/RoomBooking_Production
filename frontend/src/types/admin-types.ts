@@ -1,9 +1,9 @@
 // types/admin-types.ts
 
 export interface BackendBooking {
-    id: number; // Assuming primary key 'id' in DB is number
+    id: number; 
     event_id: string;
-    room_id: string; // Changed back to string
+    room_id: string; 
     room_name: string;
     subject: string;
     description?: string;
@@ -22,7 +22,7 @@ export interface BackendBooking {
 }
 
 export interface CreateBookingRequest {
-    room_id: string; // Changed back to string
+    room_id: string; 
     room_name: string;
     subject: string;
     description?: string;
@@ -47,7 +47,7 @@ export interface BookingsListResponse {
 }
 
 export interface EmailRequest {
-    bookingId: string; // Assuming bookingId passed here is the event_id or string primary key
+    bookingId: string; 
     organizerEmail: string;
     subject: string;
     message: string;

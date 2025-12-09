@@ -5,13 +5,11 @@ const fs = require('fs');
 const dotenv = require('dotenv');
 const { connectDB } = require('./config/database'); 
 
-// Controllers
 const { roomController } = require('./controllers/roomController');
 const { bookingController } = require('./controllers/bookingController');
 const { otpController } = require('./controllers/otpController');
 const { adminController } = require('./controllers/adminController');
 
-// Routes
 const roomRoutes = require('./routes/roomRoutes');
 const bookingRoutes = require('./routes/bookingroutes'); 
 const otpRoutes = require('./routes/otpRoutes');
@@ -21,11 +19,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Init Uploads Dir
 const uploadDir = path.join(__dirname, 'public/uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-// Middleware
 app.use(cors({ origin: '*', credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -35,13 +31,11 @@ const startServer = async () => {
   try {
     const pool = await connectDB();
     
-    // Inject Pool
     roomController.setDbPool(pool);
     bookingController.setDbPool(pool);
     otpController.setDbPool(pool);
     adminController.setDbPool(pool);
 
-    // DEBUGGING LOGS (To find the error)
     console.log("------------------------------------------------");
     console.log("Type of roomRoutes:", typeof roomRoutes, roomRoutes?.name || "Is Object");
     console.log("Type of bookingRoutes:", typeof bookingRoutes, bookingRoutes?.name || "Is Object");

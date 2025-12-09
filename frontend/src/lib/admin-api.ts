@@ -23,7 +23,6 @@ export const deleteBookingAdmin = (id: string) => adminFetch(`/admin/bookings/${
 
 export const sendRescheduleEmail = (data: any) => adminFetch('/admin/send-reschedule-email', { method: 'POST', body: JSON.stringify(data) });
 
-// This was missing! It adds the "Create Booking" feature for Admins
 export const createBooking = (data: any) => adminFetch('/admin/create-booking', {
   method: 'POST',
   body: JSON.stringify(data)
@@ -34,7 +33,7 @@ export const getAllRooms = () => adminFetch('/rooms');
 
 export const createRoom = (formData: FormData) => fetch(`${API}/rooms`, {
   method: 'POST',
-  headers: ADMIN_AUTH, // FormData sets its own Content-Type
+  headers: ADMIN_AUTH, 
   body: formData
 }).then(r => r.json());
 

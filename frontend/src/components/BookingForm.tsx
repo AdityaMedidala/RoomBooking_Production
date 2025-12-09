@@ -14,12 +14,11 @@ import { cn } from "@/lib/utils";
 interface BookingFormProps {
   room: Room;
   onClose: () => void;
-  bookingToReschedule?: any; // Using any to be flexible with backend response types
+  bookingToReschedule?: any; 
 }
 
-// Generate slots from 08:00 to 20:00
 const TIME_SLOTS = Array.from({ length: 25 }, (_, i) => {
-  const totalMinutes = 8 * 60 + i * 30; // Start at 8:00 AM
+  const totalMinutes = 8 * 60 + i * 30; 
   const h = Math.floor(totalMinutes / 60);
   const m = totalMinutes % 60;
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
@@ -35,16 +34,13 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   
-  // If rescheduling, email is considered verified
   const [verified, setVerified] = useState(!!bookingToReschedule);
   
-  // Store booked ranges in minutes for easy comparison
   const [bookedRanges, setBookedRanges] = useState<{start: number, end: number}[]>([]);
   
   const [form, setForm] = useState({
     subject: bookingToReschedule?.subject || "",
     email: bookingToReschedule?.organizer_email || "",
-    // Use local date string YYYY-MM-DD
     date: bookingToReschedule 
       ? new Date(bookingToReschedule.start_datetime).toISOString().split('T')[0] 
       : new Date().toISOString().split("T")[0],
@@ -62,12 +58,11 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
         const bookings = await fetchBookedSlots(room.id, form.date);
         
         const ranges = bookings
-          .filter(b => b.id !== bookingToReschedule?.event_id) // Ignore self if rescheduling
+          .filter(b => b.id !== bookingToReschedule?.event_id) 
           .map(b => {
              const start = new Date(b.start.dateTime);
              const end = new Date(b.end.dateTime);
              return {
-                // Convert to minutes from midnight for the selected day
                 start: start.getHours() * 60 + start.getMinutes(),
                 end: end.getHours() * 60 + end.getMinutes()
              };
@@ -82,39 +77,33 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
 
   // --- 2. Slot Logic ---
   
-  // Check if a specific 30-min slot is free
   const isSlotAvailable = (timeStart: string) => {
      const slotStartMins = timeToMinutes(timeStart);
      const slotEndMins = slotStartMins + 30;
      
-     // Overlap check: Range A overlaps Range B if (StartA < EndB) and (EndA > StartB)
      return !bookedRanges.some(range => range.start < slotEndMins && range.end > slotStartMins);
   };
 
-  // Calculate valid End Times based on selected Start Time
-  // Stop offering times as soon as we hit a booked slot
+  
   const validEndTimes = useMemo(() => {
     if (!form.startTime) return [];
     
     const startMins = timeToMinutes(form.startTime);
     const valid: string[] = [];
     
-    // Allow selecting up to 4 hours (8 slots)
     for (let i = 1; i <= 8; i++) {
        const endMins = startMins + (i * 30);
-       const chunkStart = endMins - 30; // The 30m block we are adding
+       const chunkStart = endMins - 30; 
        
-       // If this block overlaps ANY booking, we stop.
        const isBlocked = bookedRanges.some(r => r.start < endMins && r.end > chunkStart);
        
        if (isBlocked) break; 
        
-       // Format back to HH:MM
        const h = Math.floor(endMins / 60);
        const m = endMins % 60;
        const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
        
-       if (timeToMinutes(timeStr) > timeToMinutes("20:00")) break; // Don't go past 8 PM
+       if (timeToMinutes(timeStr) > timeToMinutes("20:00")) break; 
        valid.push(timeStr);
     }
     return valid;
@@ -144,7 +133,6 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
   };
 
   const handleNextStep = () => {
-      // Logic check for participants
       if(form.participants > room.capacity) {
           toast({ variant: "destructive", title: "Capacity Exceeded", description: `This room only holds ${room.capacity} people.` });
           return;
@@ -159,7 +147,6 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
       location: room.location,
       subject: form.subject,
       organizerEmail: form.email,
-      // Create proper Date objects for the selected day/time
       start: new Date(`${form.date}T${form.startTime}:00`),
       end: new Date(`${form.date}T${form.endTime}:00`),
       totalParticipants: Number(form.participants),
@@ -208,7 +195,6 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.5); border-radius: 10px; }
       `}</style>
 
-      {/* Floating Background Elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {playstationShapes.map((shape, i) => (
           <div key={i} className={`absolute ${shape.class} ${shape.size} ${shape.color} opacity-20`} style={{animationDelay: shape.delay}}>
@@ -217,11 +203,9 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
         ))}
       </div>
 
-      {/* Main Container with Gradient Border */}
       <div className="gaming-gradient-border w-full max-w-2xl max-h-[90vh] flex flex-col relative z-10 shadow-2xl shadow-blue-500/20">
         <div className="bg-slate-900 rounded-[14px] flex flex-col h-full overflow-hidden">
           
-          {/* Header */}
           <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-950/50">
             <div>
                <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 flex items-center gap-2">
@@ -240,7 +224,6 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
             {step === 1 ? (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 
-                {/* Inputs Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="space-y-2">
                       <Label className="text-slate-300 flex items-center gap-2"><CalendarIcon className="w-4 h-4 text-blue-400"/> Date</Label>
@@ -254,7 +237,6 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
                    </div>
                 </div>
 
-                {/* NEW: Participants Input */}
                 <div className="space-y-2">
                     <Label className="text-slate-300 flex items-center gap-2"><User className="w-4 h-4 text-green-400"/> Participants</Label>
                     <div className="flex gap-4 items-center">
@@ -265,7 +247,6 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
                     </div>
                 </div>
 
-                {/* Time Slots Grid */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                      <Label className="text-slate-300 flex items-center gap-2"><Clock className="w-4 h-4 text-pink-400"/> Select Start Time</Label>
@@ -276,7 +257,6 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
                      </div>
                   </div>
                   
-                  {/* The Grid */}
                   <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                      {TIME_SLOTS.slice(0, -1).map((time) => {
                        const available = isSlotAvailable(time);
@@ -302,7 +282,6 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
                   </div>
                 </div>
 
-                {/* End Time Selector (Conditional) */}
                 {form.startTime && (
                    <div className="space-y-3 animate-in fade-in slide-in-from-left-4 duration-300">
                       <Label className="text-slate-300">Select Duration (End Time)</Label>
@@ -338,7 +317,6 @@ export const BookingForm = ({ room, onClose, bookingToReschedule }: BookingFormP
               </div>
             ) : (
               <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-                {/* Summary Card */}
                 <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5 flex gap-5 items-center">
                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center border border-blue-500/30">
                       <CalendarIcon className="h-7 w-7 text-blue-400"/>

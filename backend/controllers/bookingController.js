@@ -23,7 +23,6 @@ const bookingController = {
 
     try {
       const dateOnly = startDate.split('T')[0];
-      // Note: Postgres works well with ISO strings, but explicit casting ensures safety
       const query = `
         SELECT event_id, room_id, room_name, subject, organizer_email, start_datetime, end_datetime, status 
         FROM room_bookings
@@ -33,7 +32,6 @@ const bookingController = {
         AND start_datetime <= $3::timestamptz
         ORDER BY start_datetime ASC
       `;
-      // Start and End of the specific day
       const startOfDay = `${dateOnly}T00:00:00.000Z`;
       const endOfDay = `${dateOnly}T23:59:59.999Z`;
 
@@ -72,7 +70,6 @@ const bookingController = {
 
       await client.query('BEGIN');
 
-      // Check Room Capacity
       const roomCheck = await client.query('SELECT capacity FROM rooms WHERE id = $1', [room_id]);
       if (roomCheck.rowCount === 0) {
         await client.query('ROLLBACK');
@@ -83,7 +80,6 @@ const bookingController = {
         return res.status(400).json({ success: false, message: 'Exceeds room capacity.' });
       }
 
-      // Check Availability (Overlap)
       const startUtc = new Date(start_datetime);
       const endUtc = new Date(end_datetime);
       const availQuery = `
@@ -98,7 +94,6 @@ const bookingController = {
         return res.status(409).json({ success: false, message: 'Room already booked.' });
       }
 
-      // Insert
       const event_id = crypto.randomUUID();
       const insertQuery = `
         INSERT INTO room_bookings (
@@ -117,7 +112,6 @@ const bookingController = {
       await client.query(insertQuery, values);
       await client.query('COMMIT');
 
-      // Send Email
       const emailHtml = `
         <h3>Booking Confirmed</h3>
         <p><strong>Room:</strong> ${room_name}</p>
@@ -149,14 +143,12 @@ const bookingController = {
 
       await client.query('BEGIN');
 
-      // Verify Existing Booking
       const existCheck = await client.query("SELECT * FROM room_bookings WHERE event_id = $1 AND status = 'confirmed'", [eventId]);
       if (existCheck.rowCount === 0) {
         await client.query('ROLLBACK');
         return res.status(404).json({ success: false, message: 'Booking not found.' });
       }
 
-      // Check New Room Details
       const roomCheck = await client.query('SELECT capacity, name, location FROM rooms WHERE id = $1', [room_id]);
       if (roomCheck.rowCount === 0) {
         await client.query('ROLLBACK');
@@ -169,7 +161,6 @@ const bookingController = {
         return res.status(400).json({ success: false, message: 'Exceeds room capacity.' });
       }
 
-      // Check Overlap (excluding current event)
       const startUtc = new Date(start_datetime);
       const endUtc = new Date(end_datetime);
       const availQuery = `
@@ -184,7 +175,6 @@ const bookingController = {
         return res.status(409).json({ success: false, message: 'Conflict detected.' });
       }
 
-      // Update
       const updateQuery = `
         UPDATE room_bookings SET
           room_id = $1, room_name = $2, subject = $3, description = $4,
@@ -203,7 +193,6 @@ const bookingController = {
       await client.query(updateQuery, values);
       await client.query('COMMIT');
 
-      // Email
       const html = `<p>Your booking has been rescheduled to <strong>${newRoomName}</strong> at ${startUtc.toLocaleString()}.</p>`;
       await sendEmail(organizer_email, `Booking Rescheduled: ${subject}`, html);
 

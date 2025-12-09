@@ -22,7 +22,6 @@ import {
 } from "@/lib/admin-api";
 import { useNavigate } from "react-router-dom";
 
-// --- Helper Functions ---
 const formatUtcToLocal = (utcTimestampString) => {
     if (!utcTimestampString) return '';
     try {
@@ -44,7 +43,6 @@ const formatDateTime = (isoString, options) =>
 const formatDate = (dateStr) => formatDateTime(dateStr, { month: "short", day: "numeric", year: "numeric" });
 const formatTime = (dateStr) => formatDateTime(dateStr, { hour: "2-digit", minute: "2-digit", hour12: true });
 
-// --- Reusable Components ---
 const StatusBadge = ({ status }) => {
   const config = {
     cancelled: { icon: XCircle, text: "Cancelled", className: "bg-red-500/20 text-red-300 border-red-500/30" },
@@ -82,7 +80,6 @@ const LoadingButton = ({ isLoading, children, ...props }) => (
   </Button>
 );
 
-// --- History Panel ---
 const HistoryPanel = ({ bookings, isOpen, onOpenChange }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const sortedBookings = useMemo(
@@ -161,7 +158,6 @@ const RoomManagement = ({ rooms, onBack, onSave, onDelete, isLoading }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isNewLocation, setIsNewLocation] = useState(false);
 
-  // Derive unique locations from existing rooms
   const uniqueLocations = useMemo(() => {
     return [...new Set(rooms.map(r => r.location).filter(Boolean))];
   }, [rooms]);
@@ -319,7 +315,6 @@ const AdminPanel = () => {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  // Removed internal_participants, external_participants, attendee_emails
   const initialNewBooking = { room_id: "", room_name: "", subject: "", organizer_email: "", start_datetime: "", end_datetime: "", meeting_type: "in-person" };
   const [newBooking, setNewBooking] = useState(initialNewBooking);
   const [emailForm, setEmailForm] = useState({ subject: "", message: "" });
@@ -374,7 +369,6 @@ const AdminPanel = () => {
         const room = data.rooms.find(r => String(r.id) === String(b.room_id));
         const location = room ? room.location : "Location not found";
         
-        // CRITICAL FIX: Robust ID detection
         const primaryId = b.id || b.event_id || b.booking_id;
 
         return {
@@ -382,7 +376,7 @@ const AdminPanel = () => {
           title: b.subject,
           start: b.start_datetime,
           end: b.end_datetime,
-          extendedProps: { ...b, location, realId: primaryId }, // Pass the real ID here too
+          extendedProps: { ...b, location, realId: primaryId }, 
           className: "fc-event-style",
         };
       });
@@ -394,7 +388,6 @@ const AdminPanel = () => {
     const eventId = clickInfo.event.id; 
     const bookingData = clickInfo.event.extendedProps;
     
-    // Merge reliable ID into selection
     const completeBooking = { ...bookingData, id: eventId };
 
     setSelectedBooking(completeBooking);
@@ -407,18 +400,16 @@ const AdminPanel = () => {
   };
 
   const handleCreateBooking = async () => {
-    // CRITICAL FIX: Convert local DateTime to ISO String for backend compatibility
     const bookingPayload = { 
         ...newBooking, 
         start_datetime: new Date(newBooking.start_datetime).toISOString(),
         end_datetime: new Date(newBooking.end_datetime).toISOString(),
-        total_participants: 1 // Defaulted as fields removed
+        total_participants: 1 
     };
 
     const apiAction = () => createBooking(bookingPayload);
     await handleApiCall(apiAction, "booking", "Booking Created");
     
-    // Auto Send Email
     const emailData = {
         organizerEmail: newBooking.organizer_email,
         subject: `Booking Confirmed: ${newBooking.subject}`,
@@ -427,7 +418,6 @@ const AdminPanel = () => {
     sendRescheduleEmail(emailData).catch(e => console.error("Auto email failed", e));
     
     setNewBooking(initialNewBooking);
-    // Slight delay to allow backend to index before refetching
     setTimeout(() => {
         fetchAllData();
         setSideboxView("list");
@@ -435,7 +425,6 @@ const AdminPanel = () => {
   };
   
   const handleDeleteBooking = async (id) => {
-    // CRITICAL FIX: Guard clause against undefined IDs
     if (!id || id === 'undefined') {
         toast({ title: "System Error", description: "Cannot delete: Booking ID is missing.", variant: "destructive" });
         return;
@@ -447,7 +436,6 @@ const AdminPanel = () => {
     const apiAction = () => deleteBookingAdmin(id);
     await handleApiCall(apiAction, "delete", "Booking Cancelled");
 
-    // Auto Send Cancellation Email
     if (bookingToDelete) {
         const emailData = {
             bookingId: id,

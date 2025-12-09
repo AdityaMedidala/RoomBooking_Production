@@ -1,5 +1,4 @@
 // src/types/room.ts
-
 export interface Room {
   id: string; 
   name: string;
@@ -7,11 +6,10 @@ export interface Room {
   features: string[];
   image?: string;
   location: string;
-  // Removed emailAddress as it's not used in the new backend
 }
 
 export interface BackendBooking {
-  event_id: string; // UUID from Postgres
+  event_id: string; 
   room_id: number;
   room_name: string;
   subject: string;
